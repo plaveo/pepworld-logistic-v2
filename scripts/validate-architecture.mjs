@@ -81,15 +81,15 @@ const builderHasDemoTrue =
   /function demoMapCard[\s\S]*?isDemoPayload:\s*true/.test(demoSrc) ||
   /const demoMapCard[\s\S]*?isDemoPayload:\s*true/.test(demoSrc);
 
-const demoIsDemoCount = countMatches(demoSrc, /isDemoPayload:\s*true/g);
+const isDemoFlagCount = countMatches(demoSrc, /isDemoPayload:\s*true/g);
 
 const isLabelled =
   demoMapCardCallCount > 0 &&
-  (builderHasDemoTrue || demoIsDemoCount >= demoMapCardCallCount);
+  (builderHasDemoTrue || isDemoFlagCount >= demoMapCardCallCount);
 
 check(
   `All ${demoMapCardCallCount} map card demo records have isDemoPayload: true` +
-    (builderHasDemoTrue ? " (via builder function)" : ` (found ${demoIsDemoCount} true flags)`),
+    (builderHasDemoTrue ? " (via builder function)" : ` (found ${isDemoFlagCount} true flags)`),
   isLabelled
 );
 
@@ -117,11 +117,11 @@ check(
 console.log("\n5. No hard-coded production coordinates (Build Rule 5)");
 
 const mapSrc = readFileSync(resolve(root, "components/leaflet-map.tsx"), "utf-8");
-// Allow Philippines center lat/lng (12.8797 / 121.7740) only
-const coordPattern = /\b\d+\.\d{4,}\b/g;
+// Allow Philippines center lat/lng (12.8797 / 121.774) only — match 3+ decimal places
+const coordPattern = /\b\d+\.\d{3,}\b/g;
 const allCoords = [...mapSrc.matchAll(coordPattern)].map((m) => parseFloat(m[0]));
-// Valid demo center coords for Philippines
-const allowedCoords = new Set([12.8797, 121.774, 121.7740]);
+// Valid demo center coords for Philippines (public geographic knowledge, not fabricated)
+const allowedCoords = new Set([12.8797, 121.774]);
 const illegalCoords = allCoords.filter((c) => !allowedCoords.has(c) && c > 1);
 
 check(
