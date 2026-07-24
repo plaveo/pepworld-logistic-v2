@@ -1,0 +1,48 @@
+name: Run Consolidated Logistics V2 Installer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout consolidated branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/consolidated-v2
+          fetch-depth: 0
+
+      - name: Run uploaded installer
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          lines = Path("apply-consolidated-v2.yml").read_text().splitlines()
+
+          marker = next(
+              i for i, line in enumerate(lines)
+              if line.strip() == "- name: Apply consolidated files"
+          )
+
+          run_line = next(
+              i for i in range(marker, len(lines))
+              if lines[i].strip() == "run: |"
+          )
+
+          body = lines[run_line + 1:]
+
+          Path("/tmp/apply-v2.sh").write_text(
+              "\n".join(
+                  line[10:] if line.startswith("          ") else line
+                  for line in body
+              ) + "\n"
+          )
+          PY
+
+          bash /tmp/apply-v2.sh
