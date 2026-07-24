@@ -1,18 +1,9 @@
 // components/logistics-workbench.tsx
-// Full PEPWORLD Logistics Intelligence V2 responsive workbench.
-// Desktop: 3-column layout (left panel · center map · right cards).
-// Mobile: map first, expandable bottom-sheet for cards.
-//
-// Build Rule 1: does not modify any live application.
-// Build Rule 4: GO/CAUTION/AVOID (and NOT_COMPUTED) signal lives at response
-//               level, never inside individual map cards.
-// Build Rule 5: No fabricated coordinates — map shows "No verified geographic
-//               features loaded" in demo mode.
-// Build Rule 8: demo payloads are always labelled.
+// Responsive V2 workbench: desktop left/center/right; mobile map-first bottom sheet.
 
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { IntelligenceResponse, MapCardOutput } from "@/lib/types";
 import { LeafletMap, type LeafletMapLayer } from "./leaflet-map";
 import { IntelligenceCard } from "./intelligence-card";
@@ -22,190 +13,183 @@ interface LogisticsWorkbenchProps {
   initialResponse: IntelligenceResponse;
 }
 
-// Suggested questions shown in the left panel (demonstration only).
 const SUGGESTED_QUESTIONS = [
-  "What is the route capacity for NCR to Cebu?",
-  "Which vehicles are available in Mindanao?",
-  "Show warehouse throughput for Davao hub.",
-  "What is the carrier compliance status?",
-  "Are there any route hazards on RORO lanes?",
-  "What demand forecast exists for Visayas region?",
+  "Which refrigerated warehouses are connected to Manila Port?",
+  "What route evidence is available for the selected connection?",
+  "Which logistics nodes are inside the selected territory?",
+  "What data is missing for this map answer?",
+  "What alternative routes or facilities are recorded?",
+  "What support dependencies are available near the selected node?",
 ];
 
 const INITIAL_LAYERS: LeafletMapLayer[] = [
-  { id: "route",     label: "Routes",     enabled: true  },
-  { id: "vehicle",   label: "Vehicles",   enabled: true  },
-  { id: "warehouse", label: "Warehouses", enabled: true  },
-  { id: "carrier",   label: "Carriers",   enabled: false },
-  { id: "order",     label: "Orders",     enabled: false },
+  { id: "port", label: "Ports", enabled: true },
+  { id: "airport", label: "Airports", enabled: true },
+  { id: "warehouse", label: "Warehouses", enabled: true },
+  { id: "road", label: "Roads", enabled: true },
+  { id: "industrial-zone", label: "Industrial zones", enabled: false },
+  { id: "market", label: "Markets", enabled: false },
+  { id: "workforce", label: "Workforce areas", enabled: false },
+  { id: "support", label: "Support services", enabled: false },
 ];
 
-// Right-panel card order per specification:
-// MC01, MC02, MC03 or MC06, (ENG cards), MC04, MC05, MC07, MC08, MC09–MC12 when relevant.
 const RIGHT_PANEL_ORDER = [
-  "MC-001", "MC-002", "MC-003", "MC-006",
-  "MC-004", "MC-005", "MC-007", "MC-008",
-  "MC-009", "MC-010", "MC-011", "MC-012",
+  "MC01",
+  "MC02",
+  "MC03",
+  "MC06",
+  "MC04",
+  "MC05",
+  "MC07",
+  "MC08",
+  "MC09",
+  "MC10",
+  "MC11",
+  "MC12",
 ];
 
-function sortMapCards(cards: MapCardOutput[]): MapCardOutput[] {
-  return [...cards].sort((a, b) => {
-    const ai = RIGHT_PANEL_ORDER.indexOf(a.cardId);
-    const bi = RIGHT_PANEL_ORDER.indexOf(b.cardId);
-    if (ai === -1 && bi === -1) return 0;
-    if (ai === -1) return 1;
-    if (bi === -1) return -1;
-    return ai - bi;
-  });
-}
-
-// Slot labels for right panel per approved spec.
 const CARD_SLOT_LABEL: Record<string, string> = {
-  "MC-001": "MC01 · Map Answer",
-  "MC-002": "MC02 · Selected Connection",
-  "MC-003": "MC03 · Route Intelligence",
-  "MC-004": "MC04 · Node Intelligence",
-  "MC-005": "MC05 · Ecosystem Context",
-  "MC-006": "MC06 · Territory and Coverage",
-  "MC-007": "MC07 · Data Condition",
-  "MC-008": "MC08 · Evidence (Compliance)",
-  "MC-009": "MC09 · Cost Intelligence",
-  "MC-010": "MC10 · Risk Intelligence",
-  "MC-011": "MC11 · Data Quality",
-  "MC-012": "MC12 · Lineage",
+  MC01: "MC01 · Map Answer",
+  MC02: "MC02 · Selected Connection",
+  MC03: "MC03 · Route Intelligence",
+  MC04: "MC04 · Node Intelligence",
+  MC05: "MC05 · Ecosystem Context",
+  MC06: "MC06 · Territory and Coverage",
+  MC07: "MC07 · Data Condition",
+  MC08: "MC08 · Evidence and Lineage",
+  MC09: "MC09 · Compatibility",
+  MC10: "MC10 · Capacity and Availability",
+  MC11: "MC11 · Alternatives",
+  MC12: "MC12 · Dependency and Support",
 };
 
 const SIGNAL_STYLE: Record<string, React.CSSProperties> = {
-  GO:           { background: "#14532d", color: "#86efac", border: "1px solid #16a34a" },
-  CAUTION:      { background: "#713f12", color: "#fde68a", border: "1px solid #ca8a04" },
-  AVOID:        { background: "#7f1d1d", color: "#fca5a5", border: "1px solid #dc2626" },
-  NOT_COMPUTED: { background: "#1e293b", color: "#94a3b8", border: "1px solid #334155" },
+  GO: { background: "#14532d", color: "#86efac", border: "1px solid #16a34a" },
+  CAUTION: { background: "#713f12", color: "#fde68a", border: "1px solid #ca8a04" },
+  AVOID: { background: "#7f1d1d", color: "#fca5a5", border: "1px solid #dc2626" },
+  NOT_COMPUTED: {
+    background: "#1e293b",
+    color: "#94a3b8",
+    border: "1px solid #334155",
+  },
 };
+
+function sortMapCards(cards: MapCardOutput[]): MapCardOutput[] {
+  return [...cards].sort(
+    (a, b) => RIGHT_PANEL_ORDER.indexOf(a.cardId) - RIGHT_PANEL_ORDER.indexOf(b.cardId)
+  );
+}
 
 export function LogisticsWorkbench({ initialResponse }: LogisticsWorkbenchProps) {
   const [response, setResponse] = useState(initialResponse);
   const [question, setQuestion] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [layers, setLayers] = useState<LeafletMapLayer[]>(INITIAL_LAYERS);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const r = response;
-  const sortedCards = sortMapCards(r.mapCardOutputs);
-  const signalStyle = SIGNAL_STYLE[r.decisionSignal] ?? SIGNAL_STYLE.NOT_COMPUTED;
+  const sortedCards = sortMapCards(response.mapCardOutputs);
+  const signalStyle =
+    SIGNAL_STYLE[response.decisionSignal] ?? SIGNAL_STYLE.NOT_COMPUTED;
 
-  const handleSubmit = useCallback(() => {
-    const q = question.trim();
-    if (!q) return;
-    // DEMO MODE: just log question to history; do not connect to any API.
-    setHistory((prev) => [q, ...prev].slice(0, 20));
+  const submitQuestion = useCallback(() => {
+    const value = question.trim();
+    if (!value) return;
+    setHistory((previous) => [value, ...previous].slice(0, 20));
     setQuestion("");
-    // Response stays as demo payload (Build Rule 2).
-    setResponse((prev) => ({
-      ...prev,
+    setResponse((previous) => ({
+      ...previous,
       requestId: `DEMO-${Date.now()}`,
       timestamp: new Date().toISOString(),
+      decisionSignal: "NOT_COMPUTED",
+      answerStatus: "NOT_YET_COMPUTED",
     }));
   }, [question]);
 
-  const handleSuggested = useCallback((q: string) => {
-    setQuestion(q);
-  }, []);
-
-  const handleClear = useCallback(() => {
-    setQuestion("");
-    setHistory([]);
-    setResponse(initialResponse);
-    setSelectedNodeId(null);
-  }, [initialResponse]);
-
   const toggleLayer = useCallback((id: string) => {
-    setLayers((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, enabled: !l.enabled } : l))
+    setLayers((previous) =>
+      previous.map((layer) =>
+        layer.id === id ? { ...layer, enabled: !layer.enabled } : layer
+      )
     );
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // Left panel content
-  // ---------------------------------------------------------------------------
+  const cardStack = (
+    <>
+      {sortedCards.map((card) => (
+        <div key={card.cardId} className="v2-card-wrapper">
+          <div className="v2-card-slot-label">{CARD_SLOT_LABEL[card.cardId]}</div>
+          <IntelligenceCard mapCard={card} />
+        </div>
+      ))}
+    </>
+  );
+
   const leftPanel = (
-    <aside
-      className="v2-left-panel"
-      aria-label="Question and controls"
-    >
-      {/* Question input */}
+    <aside className="v2-left-panel" aria-label="Question and layer controls">
       <section className="v2-panel-section">
-        <h2 className="v2-section-title">Ask a Question</h2>
+        <h2 className="v2-section-title">Ask a Map Question</h2>
         <textarea
           className="v2-textarea"
           value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
+          onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+              submitQuestion();
+            }
           }}
-          placeholder="e.g. What is the route capacity for NCR to Cebu?"
-          rows={3}
-          aria-label="Logistics question input"
+          placeholder="Ask about a port, airport, warehouse, route, territory or support node."
+          rows={4}
         />
         <button
           className="v2-btn-primary"
-          onClick={handleSubmit}
+          onClick={submitQuestion}
           disabled={!question.trim()}
         >
-          Ask (Demo)
+          Submit Question
         </button>
-        <p className="v2-hint">⚠ Demo mode — no live connection</p>
+        <p className="v2-hint">Demonstration mode — no operational data connected.</p>
       </section>
 
-      {/* Suggested questions */}
       <section className="v2-panel-section">
         <h2 className="v2-section-title">Suggested Questions</h2>
         <ul className="v2-suggestion-list">
-          {SUGGESTED_QUESTIONS.map((q) => (
-            <li key={q}>
-              <button
-                className="v2-suggestion-btn"
-                onClick={() => handleSuggested(q)}
-              >
-                {q}
+          {SUGGESTED_QUESTIONS.map((item) => (
+            <li key={item}>
+              <button className="v2-suggestion-btn" onClick={() => setQuestion(item)}>
+                {item}
               </button>
             </li>
           ))}
         </ul>
       </section>
 
-      {/* Layer controls */}
       <section className="v2-panel-section">
-        <h2 className="v2-section-title">Layer Controls</h2>
+        <h2 className="v2-section-title">Layers</h2>
         <ul className="v2-layer-list">
           {layers.map((layer) => (
             <li key={layer.id} className="v2-layer-item">
               <label className="v2-layer-label">
                 <input
+                  className="v2-checkbox"
                   type="checkbox"
                   checked={layer.enabled}
                   onChange={() => toggleLayer(layer.id)}
-                  className="v2-checkbox"
                 />
-                {LAYER_ICON[layer.id] ?? "●"} {layer.label}
+                {layer.label}
               </label>
             </li>
           ))}
         </ul>
       </section>
 
-      {/* Question history */}
       {history.length > 0 && (
         <section className="v2-panel-section">
           <h2 className="v2-section-title">Question History</h2>
           <ol className="v2-history-list">
-            {history.map((q, i) => (
-              <li key={i} className="v2-history-item">
-                <button
-                  className="v2-suggestion-btn"
-                  onClick={() => handleSuggested(q)}
-                >
-                  {q}
+            {history.map((item, index) => (
+              <li key={`${item}-${index}`} className="v2-history-item">
+                <button className="v2-suggestion-btn" onClick={() => setQuestion(item)}>
+                  {item}
                 </button>
               </li>
             ))}
@@ -213,175 +197,80 @@ export function LogisticsWorkbench({ initialResponse }: LogisticsWorkbenchProps)
         </section>
       )}
 
-      {/* Clear / reset */}
       <section className="v2-panel-section">
-        <button className="v2-btn-secondary" onClick={handleClear}>
-          Clear &amp; Reset
+        <button
+          className="v2-btn-secondary"
+          onClick={() => {
+            setQuestion("");
+            setHistory([]);
+            setResponse(initialResponse);
+          }}
+        >
+          Clear and Reset
         </button>
       </section>
     </aside>
   );
 
-  // ---------------------------------------------------------------------------
-  // Center panel (map)
-  // ---------------------------------------------------------------------------
-  const centerPanel = (
-    <div className="v2-center-panel" aria-label="Map panel">
-      {/* Decision signal strip */}
-      <div
-        className="v2-signal-strip"
-        style={signalStyle}
-        aria-label="Decision signal"
-      >
-        <span className="v2-signal-label">{r.decisionSignal}</span>
-        <span className="v2-signal-reason">{r.decisionReason}</span>
+  const mapPanel = (
+    <div className="v2-center-panel" aria-label="Philippine Logistics Ecosystem Map">
+      <div className="v2-signal-strip" style={signalStyle}>
+        <span className="v2-signal-label">{response.decisionSignal}</span>
+        <span className="v2-signal-reason">{response.decisionReason}</span>
         <StatusPill
-          status={r.status}
-          confidence={r.confidence}
-          releaseState={r.releaseState}
-          isDemoPayload={r.isDemoPayload}
+          status={response.status}
+          confidence={response.confidence}
+          releaseState={response.releaseState}
+          isDemoPayload={response.isDemoPayload}
         />
       </div>
-
-      {/* Map area */}
       <div className="v2-map-area">
         <LeafletMap
-          mapCardOutputs={r.mapCardOutputs}
+          mapCardOutputs={response.mapCardOutputs}
           layers={layers}
-          selectedNodeId={selectedNodeId}
+          selectedNodeId={null}
         />
       </div>
-
-      {/* Selected node state */}
-      {selectedNodeId && (
-        <div className="v2-selected-node" aria-label="Selected node">
-          <span style={{ color: "#94a3b8", fontSize: "0.75rem" }}>
-            Selected: <strong>{selectedNodeId}</strong>
-          </span>
-          <button
-            className="v2-clear-selection"
-            onClick={() => setSelectedNodeId(null)}
-          >
-            ✕
-          </button>
-        </div>
-      )}
     </div>
   );
 
-  // ---------------------------------------------------------------------------
-  // Right panel (card stack)
-  // ---------------------------------------------------------------------------
-  const rightPanel = (
-    <aside className="v2-right-panel" aria-label="Intelligence cards">
-      <h2 className="v2-section-title" style={{ padding: "0 0 0.5rem" }}>
-        Intelligence Cards
-      </h2>
-      {sortedCards.map((mc) => (
-        <div key={mc.cardId} className="v2-card-wrapper">
-          {CARD_SLOT_LABEL[mc.cardId] && (
-            <div className="v2-card-slot-label">
-              {CARD_SLOT_LABEL[mc.cardId]}
-            </div>
-          )}
-          <IntelligenceCard mapCard={mc} />
-        </div>
-      ))}
-    </aside>
-  );
-
-  // ---------------------------------------------------------------------------
-  // Mobile bottom-sheet toggle (map stays visible)
-  // ---------------------------------------------------------------------------
-  const mobileSheet = (
-    <div className={`v2-bottom-sheet${sheetOpen ? " v2-bottom-sheet--open" : ""}`}>
-      <div className="v2-sheet-handle-bar">
-        <button
-          className="v2-sheet-toggle"
-          aria-expanded={sheetOpen}
-          aria-label={sheetOpen ? "Collapse cards" : "Expand cards"}
-          onClick={() => setSheetOpen((v) => !v)}
-        >
-          {sheetOpen ? "▼ Hide cards" : "▲ Show cards"}
-        </button>
-      </div>
-      {sheetOpen && (
-        <div className="v2-sheet-content">
-          {/* Mobile card order per spec */}
-          {sortedCards.map((mc) => (
-            <div key={mc.cardId} className="v2-card-wrapper">
-              {CARD_SLOT_LABEL[mc.cardId] && (
-                <div className="v2-card-slot-label">
-                  {CARD_SLOT_LABEL[mc.cardId]}
-                </div>
-              )}
-              <IntelligenceCard mapCard={mc} />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
   return (
     <>
-      {/* Desktop 3-column layout */}
       <div className="v2-workbench">
         {leftPanel}
-        {centerPanel}
-        {rightPanel}
+        {mapPanel}
+        <aside className="v2-right-panel" aria-label="Map intelligence cards">
+          <h2 className="v2-section-title">Map Intelligence Result Bundle</h2>
+          {cardStack}
+        </aside>
       </div>
 
-      {/* Mobile layout: map + bottom-sheet */}
       <div className="v2-mobile-workbench">
-        {/* Decision strip */}
-        <div
-          className="v2-signal-strip"
-          style={signalStyle}
-          aria-label="Decision signal"
-        >
-          <span className="v2-signal-label">{r.decisionSignal}</span>
-          <span className="v2-signal-reason">{r.decisionReason}</span>
-        </div>
-
-        {/* Full-width map */}
         <div className="v2-mobile-map">
           <LeafletMap
-            mapCardOutputs={r.mapCardOutputs}
+            mapCardOutputs={response.mapCardOutputs}
             layers={layers}
-            selectedNodeId={selectedNodeId}
+            selectedNodeId={null}
           />
         </div>
 
-        {/* Bottom-sheet (map remains visible while sheet is open) */}
-        {mobileSheet}
+        <div className={`v2-bottom-sheet${sheetOpen ? " v2-bottom-sheet--open" : ""}`}>
+          <div className="v2-sheet-handle-bar">
+            <button
+              className="v2-sheet-toggle"
+              onClick={() => setSheetOpen((current) => !current)}
+              aria-expanded={sheetOpen}
+            >
+              {sheetOpen ? "Hide intelligence cards" : "Show intelligence cards"}
+            </button>
+          </div>
+          {sheetOpen && <div className="v2-sheet-content">{cardStack}</div>}
+        </div>
       </div>
 
-      {/* Footer — always visible */}
       <footer className="v2-footer">
-        <p>
-          Build Rules: (1) live app not modified · (2) no production DB ·
-          (3) 120 ENG / 50 UI / 12 MC separate · (4) map cards explain only ·
-          (5) no fabricated data · (6) integrity fields preserved ·
-          (7) lineage shown · (8) demo labelled
-        </p>
-        <p>
-          Request: <code>{r.requestId}</code> ·{" "}
-          Release: <code>{r.releaseState}</code>
-        </p>
+        ENG001–ENG120 · UI01–UI50 · MC01–MC12 · No live connection · NOT_COMPUTED
       </footer>
     </>
   );
 }
-
-const LAYER_ICON: Record<string, string> = {
-  route:     "🛣",
-  vehicle:   "🚚",
-  warehouse: "🏭",
-  carrier:   "📦",
-  order:     "📋",
-};
-

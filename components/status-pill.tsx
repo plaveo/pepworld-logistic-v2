@@ -1,7 +1,4 @@
 // components/status-pill.tsx
-// Displays status, confidence and releaseState as compact labelled pills.
-// Build Rule 6: these fields must be visible through every layer.
-
 import type { RecordStatus, ConfidenceLevel, ReleaseState } from "@/lib/types";
 
 interface StatusPillProps {
@@ -12,25 +9,24 @@ interface StatusPillProps {
 }
 
 const STATUS_STYLE: Record<RecordStatus, React.CSSProperties> = {
-  active:  { background: "#14532d", color: "#86efac" },
-  stale:   { background: "#713f12", color: "#fde68a" },
+  active: { background: "#14532d", color: "#86efac" },
+  stale: { background: "#713f12", color: "#fde68a" },
   missing: { background: "#7f1d1d", color: "#fca5a5" },
-  error:   { background: "#7f1d1d", color: "#fca5a5" },
+  error: { background: "#7f1d1d", color: "#fca5a5" },
   pending: { background: "#1e293b", color: "#94a3b8" },
 };
 
 const CONFIDENCE_STYLE: Record<ConfidenceLevel, React.CSSProperties> = {
-  high:       { background: "#14532d", color: "#86efac" },
-  medium:     { background: "#713f12", color: "#fde68a" },
-  low:        { background: "#7f1d1d", color: "#fca5a5" },
+  high: { background: "#14532d", color: "#86efac" },
+  medium: { background: "#713f12", color: "#fde68a" },
+  low: { background: "#7f1d1d", color: "#fca5a5" },
   unverified: { background: "#312e81", color: "#c4b5fd" },
 };
 
 const RELEASE_STYLE: Record<ReleaseState, React.CSSProperties> = {
-  live:       { background: "#14532d", color: "#86efac" },
-  approved:   { background: "#0c4a6e", color: "#7dd3fc" },
-  review:     { background: "#713f12", color: "#fde68a" },
-  draft:      { background: "#1e293b", color: "#94a3b8" },
+  approved: { background: "#0c4a6e", color: "#7dd3fc" },
+  review: { background: "#713f12", color: "#fde68a" },
+  draft: { background: "#1e293b", color: "#94a3b8" },
   deprecated: { background: "#7f1d1d", color: "#fca5a5" },
 };
 
@@ -42,7 +38,6 @@ const pillBase: React.CSSProperties = {
   padding: "2px 8px",
   borderRadius: "9999px",
   textTransform: "uppercase",
-  marginRight: "4px",
 };
 
 export function StatusPill({
@@ -58,20 +53,12 @@ export function StatusPill({
           DEMO
         </span>
       )}
-      {status && (
-        <span style={{ ...pillBase, ...STATUS_STYLE[status] }}>
-          {status}
-        </span>
-      )}
+      {status && <span style={{ ...pillBase, ...STATUS_STYLE[status] }}>{status}</span>}
       {confidence && (
-        <span style={{ ...pillBase, ...CONFIDENCE_STYLE[confidence] }}>
-          {confidence}
-        </span>
+        <span style={{ ...pillBase, ...CONFIDENCE_STYLE[confidence] }}>{confidence}</span>
       )}
       {releaseState && (
-        <span style={{ ...pillBase, ...RELEASE_STYLE[releaseState] }}>
-          {releaseState}
-        </span>
+        <span style={{ ...pillBase, ...RELEASE_STYLE[releaseState] }}>{releaseState}</span>
       )}
     </span>
   );

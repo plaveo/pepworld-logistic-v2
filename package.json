@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "validate:architecture": "node scripts/validate-architecture.mjs"
+    "validate:architecture": "node scripts/validate-architecture.mjs",
+    "check": "npm run validate:architecture && npm run lint && npm run build"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
