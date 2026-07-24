@@ -1,0 +1,25 @@
+plaveo/pepworld-logistic
+│
+├── README.md
+│   PEPWORLD Logistics Intelligence V2
+│
+├── product-architecture/
+│
+├── map-foundation-layers-01-12/
+│
+├── advanced-layers-13-20/
+│
+├── map-question-registry/
+│
+├── map-card-registry/
+│
+├── zebra-cis-engine-mapping/
+│
+├── interface-architecture/
+│
+├── migration-from-v1/
+│
+├── docs/
+│
+└── apps/
+    └── web/
