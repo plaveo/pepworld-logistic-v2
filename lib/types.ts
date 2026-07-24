@@ -3,12 +3,7 @@
 // Build Rule 6: status, missingInput, confidence, freshness and releaseState
 // must be preserved through every layer.
 
-// NOT_COMPUTED is used in DEMONSTRATION MODE when no live data is connected.
-export type DecisionSignal = "GO" | "CAUTION" | "AVOID" | "NOT_COMPUTED";
-
-// Sentinel values for demonstration payloads (never connected to live systems).
-export type ConnectionStatus = "NOT_CONNECTED" | "CONNECTED" | "DEGRADED";
-export type CalculationStatus = "NOT_YET_COMPUTED" | "COMPUTING" | "COMPLETE" | "ERROR";
+export type DecisionSignal = "GO" | "CAUTION" | "AVOID";
 
 export type ReleaseState =
   | "draft"
@@ -73,9 +68,6 @@ export interface MapCardOutput {
   freshness: string;
   releaseState: ReleaseState;
   isDemoPayload: boolean;
-  // Demonstration-mode sentinel fields
-  connectionStatus?: ConnectionStatus;
-  calculationStatus?: CalculationStatus;
 }
 
 // Full intelligence response returned by the API.

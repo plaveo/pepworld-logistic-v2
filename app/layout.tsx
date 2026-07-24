@@ -20,10 +20,7 @@ export default function RootLayout({
         <div className="demo-banner" aria-label="Demo mode active">
           ⚠ DEMO MODE — Mock payloads only. Not connected to live data.
         </div>
-        {/* paddingTop matches --demo-banner-height CSS variable (28px) */}
-        <main style={{ paddingTop: "var(--demo-banner-height)", height: "100vh", overflow: "hidden" }}>
-          {children}
-        </main>
+        <main style={{ paddingTop: "2rem" }}>{children}</main>
       </body>
     </html>
   );
