@@ -114,6 +114,7 @@ export const DEMO_DATA_QUALITY_OUTPUT: EngineCardOutput = {
 export const DEMO_ROUTE_MAP_CARD: MapCardOutput = {
   cardId: "MC-001",
   cardName: "RouteIntelligenceMapCard",
+  version: "1.0.0",
   explanation:
     "[DEMO] Route DEMO-ROUTE-001 shows 72% capacity utilisation with 3 open slots. " +
     "No conflicts or hazards detected. Confidence: HIGH. " +
@@ -134,6 +135,7 @@ export const DEMO_ROUTE_MAP_CARD: MapCardOutput = {
 export const DEMO_VEHICLE_MAP_CARD: MapCardOutput = {
   cardId: "MC-002",
   cardName: "VehicleIntelligenceMapCard",
+  version: "1.0.0",
   explanation:
     "[DEMO] Vehicle DEMO-VEH-001 is available and operational. " +
     "No maintenance flags. Confidence: MEDIUM. " +
@@ -151,6 +153,7 @@ export const DEMO_VEHICLE_MAP_CARD: MapCardOutput = {
 export const DEMO_DATA_QUALITY_MAP_CARD: MapCardOutput = {
   cardId: "MC-011",
   cardName: "DataQualityMapCard",
+  version: "1.0.0",
   explanation:
     "[DEMO] Data completeness score is 95%. All required integrity fields " +
     "(status, missingInput, confidence, freshness, releaseState) are present. " +

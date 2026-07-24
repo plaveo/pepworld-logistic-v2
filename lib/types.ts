@@ -58,6 +58,7 @@ export interface EngineCardOutput extends BaseRecord {
 export interface MapCardOutput {
   cardId: string;
   cardName: string;
+  version: string;
   explanation: string;
   engineOutputs: EngineCardOutput[];
   lineage: SourceLineage[];

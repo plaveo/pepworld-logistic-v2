@@ -35,7 +35,7 @@ export function IntelligenceCard({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
         <div>
           <span style={{ fontSize: "0.7rem", color: "#64748b", fontFamily: "var(--font-mono)" }}>
-            {mapCard.cardId}
+            {mapCard.cardId} · v{mapCard.version}
           </span>
           <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#f1f5f9" }}>
             {mapCard.cardName}
