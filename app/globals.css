@@ -1,0 +1,72 @@
+/* globals.css */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-go: #16a34a;
+  --color-caution: #ca8a04;
+  --color-avoid: #dc2626;
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-border: #334155;
+  --color-text: #f1f5f9;
+  --color-muted: #94a3b8;
+  --color-demo-badge: #7c3aed;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+}
+
+html,
+body {
+  height: 100%;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Demo payload banner — always visible per Build Rule 8 */
+.demo-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--color-demo-badge);
+  color: #fff;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 0;
+  text-transform: uppercase;
+}
+
+/* Status pill colours */
+.status-active   { color: var(--color-go);      }
+.status-stale    { color: var(--color-caution);  }
+.status-missing  { color: var(--color-avoid);    }
+.status-error    { color: var(--color-avoid);    }
+.status-pending  { color: var(--color-muted);    }
+
+/* Decision signal colours */
+.signal-go      { color: var(--color-go);      }
+.signal-caution { color: var(--color-caution); }
+.signal-avoid   { color: var(--color-avoid);   }
+
+/* Card surface */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
