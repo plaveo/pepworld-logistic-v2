@@ -8,12 +8,15 @@ PEPWORLD Logistics Intelligence V2 uses a three-tier card architecture to separa
 
 ## Tier 1 — Engine Cards (120 total)
 
-Engine cards are the atomic computation units of the system. Each card is an independent component class that:
+Engine cards are the atomic computation units of the system. Each card is an independent component class identified by an official ENG ID.
 
-- Reads from a single verified data source (Zebra, CIS, WMS, OMS, GPS feeds, etc.)
+**Scaffold state:** Official engine titles are PENDING. No names, formulas, calculations, data sources or live connections are recorded until officially supplied.
+
 - Produces an `EngineCardOutput` with the full set of integrity fields
 - Never fabricates any value (capacity, availability, utilization, route time, coordinates, verification or evidence)
-- Tags its output with `isDemoPayload: true` when operating on mock data
+- Tags its output with `isDemoPayload: true` when operating on demonstration data
+- `connectionStatus` is `NOT_CONNECTED` until an approved data-connection task is implemented
+- `calculationStatus` is `NOT_YET_COMPUTED` until a released engine is connected
 
 ### Integrity fields (preserved on every `EngineCardOutput`)
 
@@ -23,18 +26,13 @@ Engine cards are the atomic computation units of the system. Each card is an ind
 | `missingInput` | `string[]` | Absent required input signals |
 | `confidence` | `ConfidenceLevel` | Data confidence rating |
 | `freshness` | ISO 8601 string | Timestamp of last verified data update |
-| `releaseState` | `ReleaseState` | Lifecycle stage of this card output |
+| `releaseState` | `ReleaseState` | Lifecycle stage — scaffold engines are `draft` |
 
-### Domain groups
+### Engine ID sequence
 
-| Range | Domain |
+| Range | Status |
 |---|---|
-| EC-001–EC-020 | Route Intelligence |
-| EC-021–EC-040 | Vehicle Intelligence |
-| EC-041–EC-060 | Warehouse Intelligence |
-| EC-061–EC-080 | Carrier Intelligence |
-| EC-081–EC-100 | Demand & Order Intelligence |
-| EC-101–EC-120 | Network & System Intelligence |
+| ENG001–ENG120 | Registered scaffold (PENDING_OFFICIAL_TITLE) |
 
 ---
 
@@ -45,23 +43,24 @@ Map cards aggregate engine card outputs and produce human-readable explanations.
 - Accepts one or more `EngineCardOutput` records
 - Produces a `MapCardOutput` with an `explanation` string
 - **Does NOT emit a `GO` / `CAUTION` / `AVOID` signal** — decisions are made at the workbench level only
+- `decisionAuthority` is always `false`
 - Preserves all integrity fields from its engine inputs
 - Displays full source lineage when evidence is available
 
-| ID | Name | Domain |
+| ID | Display Name | Category |
 |---|---|---|
-| MC-001 | RouteIntelligenceMapCard | Route capacity, availability, utilisation |
-| MC-002 | VehicleIntelligenceMapCard | Vehicle status, location, compliance |
-| MC-003 | WarehouseIntelligenceMapCard | Warehouse capacity, throughput, alerts |
-| MC-004 | CarrierIntelligenceMapCard | Carrier performance, SLA, availability |
-| MC-005 | OrderIntelligenceMapCard | Order priority, exceptions, delivery |
-| MC-006 | DemandIntelligenceMapCard | Demand forecast, volatility |
-| MC-007 | NetworkIntelligenceMapCard | Network congestion, capacity |
-| MC-008 | ComplianceMapCard | Regulatory compliance across domains |
-| MC-009 | CostIntelligenceMapCard | Cost aggregation across domains |
-| MC-010 | RiskIntelligenceMapCard | Composite risk scores |
-| MC-011 | DataQualityMapCard | Data freshness, confidence, missing inputs |
-| MC-012 | LineageMapCard | Full source lineage explorer |
+| MC01 | MapAnswer | CORE |
+| MC02 | SelectedConnection | CORE |
+| MC03 | RouteIntelligence | CORE |
+| MC04 | NodeIntelligence | CORE |
+| MC05 | EcosystemContext | CORE |
+| MC06 | TerritoryandCoverage | CORE |
+| MC07 | DataCondition | CORE |
+| MC08 | EvidenceandLineage | CORE |
+| MC09 | Compatibility | CONDITIONAL |
+| MC10 | CapacityandAvailability | CONDITIONAL |
+| MC11 | Alternatives | CONDITIONAL |
+| MC12 | DependencyandSupport | CONDITIONAL |
 
 ---
 
@@ -72,6 +71,7 @@ UI modules are the presentational layer. Each module:
 - Accepts a single `EngineCardOutput` or `MapCardOutput`
 - Renders the integrity fields and payload in a specific visual format
 - Never makes or implies a logistics decision
+- All modules are `releaseState: "draft"` in the scaffold state
 
 UI modules are grouped by domain to mirror the engine card domains:
 
@@ -86,20 +86,33 @@ UI modules are grouped by domain to mirror the engine card domains:
 ## Decision Flow
 
 ```
-Raw Data Sources
+Raw Data Sources (NOT CONNECTED in scaffold state)
      │
      ▼
-Engine Cards (120) ── produce EngineCardOutput (with integrity fields)
+Engine Cards (120, ENG001–ENG120) ── produce EngineCardOutput (integrity fields)
      │
      ▼
-Map Cards (12) ──── produce MapCardOutput (explanation only, no decision)
+Map Cards (12, MC01–MC12) ────────── produce MapCardOutput (explanation only, no decision)
      │
      ▼
-Workbench ────────── emits GO / CAUTION / AVOID + decisionReason
+Workbench ──────────────────────────── emits decisionSignal (NOT_COMPUTED until engines released)
      │
      ▼
-UI Modules (50) ──── render results to operator
+UI Modules (50) ─────────────────────── render results to operator
 ```
+
+---
+
+## Scaffold Release States
+
+No scaffold component is marked `live`. Approved `ReleaseState` values for this scaffold:
+
+| Value | Meaning |
+|---|---|
+| `draft` | Registered but not yet reviewed or connected |
+| `review` | Under active review — not released |
+| `approved` | Approved but not yet deployed |
+| `deprecated` | Retired from active use |
 
 ---
 

@@ -3,9 +3,10 @@ import { DEMO_INTELLIGENCE_RESPONSE } from "@/lib/demo-data";
 import type { IntelligenceRequest, IntelligenceResponse } from "@/lib/types";
 
 // Build Rule 2: this endpoint does NOT write to Zebra, CIS or any production
-// database. It currently returns the demo payload only.
+// database. It returns the demonstration payload only.
 // A data-connection task with explicit approval is required before connecting
 // to live sources.
+// All responses use decisionSignal: "NOT_COMPUTED" until released engines are connected.
 
 export async function POST(request: NextRequest): Promise<NextResponse<IntelligenceResponse>> {
   const body: IntelligenceRequest = await request.json();
@@ -15,8 +16,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<Intellige
     return NextResponse.json(
       {
         ...DEMO_INTELLIGENCE_RESPONSE,
-        decisionSignal: "AVOID",
-        decisionReason: "Missing required field: timestamp",
+        decisionSignal: "NOT_COMPUTED",
+        decisionReason: "Missing required field: timestamp. Demonstration payload only.",
+        answerStatus: "INCOMPLETE_INPUT",
         status: "error",
         missingInput: ["timestamp"],
       },
@@ -24,7 +26,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Intellige
     );
   }
 
-  // Build Rule 8: always return a labeled demo payload until a live
+  // Build Rule 8: always return a labelled demo payload until a live
   // data-connection task is approved and implemented.
   const response: IntelligenceResponse = {
     ...DEMO_INTELLIGENCE_RESPONSE,
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<Intellige
 }
 
 export async function GET(): Promise<NextResponse<IntelligenceResponse>> {
-  // Convenience GET endpoint returns the demo payload.
+  // Convenience GET endpoint returns the demonstration payload.
   const response: IntelligenceResponse = {
     ...DEMO_INTELLIGENCE_RESPONSE,
     requestId: `DEMO-${Date.now()}`,

@@ -16,7 +16,36 @@ All records flowing through the system — from raw ingestion to map output — 
 | `missingInput` | `string[]` | ✅ | Names of absent required input signals. Empty array if none. |
 | `confidence` | `"high" \| "medium" \| "low" \| "unverified"` | ✅ | Confidence level of the data |
 | `freshness` | `string` (ISO 8601) | ✅ | Timestamp of last verified data update |
-| `releaseState` | `"draft" \| "review" \| "approved" \| "live" \| "deprecated"` | ✅ | Lifecycle stage |
+| `releaseState` | `"draft" \| "review" \| "approved" \| "deprecated"` | ✅ | Lifecycle stage — `"live"` is not a valid scaffold value |
+
+---
+
+## Connection and Calculation State Fields
+
+| Field | TypeScript Type | Description |
+|---|---|---|
+| `connectionStatus` | `ConnectionStatus` | Current data-source connection state |
+| `calculationStatus` | `CalculationStatus` | Current computation state |
+
+**Approved `ConnectionStatus` values:**
+
+| Value | Meaning |
+|---|---|
+| `NOT_CONNECTED` | No data source is attached |
+| `STAGING_CONNECTED` | Connected to staging environment only |
+| `CIS_VALIDATED` | CIS validation passed |
+| `RELEASED_SIGNAL_CONNECTED` | Released signal feed is attached |
+| `ACCESS_RESTRICTED` | Connection exists but access is restricted |
+
+**Approved `CalculationStatus` values:**
+
+| Value | Meaning |
+|---|---|
+| `NOT_YET_COMPUTED` | No released engine computation run |
+| `COMPUTED` | Calculation completed |
+| `PARTIAL` | Partial result — some inputs missing |
+| `FAILED` | Calculation failed |
+| `INCOMPLETE_INPUT` | Required inputs are absent |
 
 ---
 
@@ -25,9 +54,11 @@ All records flowing through the system — from raw ingestion to map output — 
 All demo and mock payloads must (Build Rule 8):
 
 - Set `isDemoPayload: true` on every record
-- Include a visible `[DEMO]` prefix in map card `explanation` strings
-- Include a `note: "DEMO — not real data"` field in engine card `payload` objects
-- Never be served to a production endpoint without explicit gating
+- Include a visible `[DEMONSTRATION]` prefix in map card `explanation` strings
+- Use `decisionSignal: "NOT_COMPUTED"` — never GO, CAUTION or AVOID
+- Use `null` for all operational fields (capacity, utilization, availability, travelTime, routeDistance, coordinates)
+- Use empty arrays for `engineResults`, `evidence`, `verifiedMatches`, `lineage`, `engineOutputs`
+- Display the banner: **DEMONSTRATION MODE — No Zebra, CIS, engine, route, capacity, availability, or operational data is connected.**
 
 ---
 
@@ -59,8 +90,8 @@ When evidence is available, every `EngineCardOutput` and `MapCardOutput` must ca
 | `source` | `string` | System name of the data source |
 | `capturedAt` | ISO 8601 string | When the raw record was captured |
 | `transformSteps` | `string[]` | Ordered list of transform stage names |
-| `engineCardId` | `string` | ID of the engine card that processed the record |
-| `mapCardId` | `string?` | ID of the map card that consumed the engine output |
+| `engineCardId` | `string` | ID of the engine card (ENG001–ENG120) that processed the record |
+| `mapCardId` | `string?` | ID of the map card (MC01–MC12) that consumed the engine output |
 
 ---
 
@@ -85,19 +116,22 @@ When evidence is available, every `EngineCardOutput` and `MapCardOutput` must ca
 {
   "requestId": "string",
   "timestamp": "ISO 8601 string",
-  "decisionSignal": "GO | CAUTION | AVOID",
-  "decisionReason": "string",
+  "decisionSignal": "NOT_COMPUTED",
+  "decisionReason": "No released engine computation is connected. Demonstration payload only.",
+  "answerStatus": "NOT_YET_COMPUTED",
   "mapCardOutputs": "MapCardOutput[]",
   "status": "RecordStatus",
   "missingInput": "string[]",
-  "confidence": "ConfidenceLevel",
-  "freshness": "ISO 8601 string",
-  "releaseState": "ReleaseState",
-  "isDemoPayload": "boolean"
+  "confidence": "unverified",
+  "freshness": "string",
+  "releaseState": "draft",
+  "connectionStatus": "NOT_CONNECTED",
+  "calculationStatus": "NOT_YET_COMPUTED",
+  "isDemoPayload": true
 }
 ```
 
-**Important:** The `decisionSignal` is emitted at this response level only. Individual `MapCardOutput` records do not contain a decision signal (Build Rule 4).
+**Important:** The `decisionSignal` is emitted at this response level only. Individual `MapCardOutput` records do not contain a decision signal (Build Rule 4). In scaffold state the signal is always `NOT_COMPUTED`.
 
 ---
 
@@ -109,4 +143,4 @@ No engine card, map card or API route in this repository may write to Zebra, CIS
 
 ## Versioning
 
-All `EngineCardOutput` and `MapCardOutput` records carry a `version` field inherited from the `CardDescriptor` in the registry. Version bumps are required whenever the `payload` schema or `explanation` format changes.
+All `EngineCardOutput` and `MapCardOutput` records carry a `version` field. Version bumps are required whenever the `payload` schema or `explanation` format changes.

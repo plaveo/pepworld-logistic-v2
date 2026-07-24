@@ -27,7 +27,6 @@ const CONFIDENCE_STYLE: Record<ConfidenceLevel, React.CSSProperties> = {
 };
 
 const RELEASE_STYLE: Record<ReleaseState, React.CSSProperties> = {
-  live:       { background: "#14532d", color: "#86efac" },
   approved:   { background: "#0c4a6e", color: "#7dd3fc" },
   review:     { background: "#713f12", color: "#fde68a" },
   draft:      { background: "#1e293b", color: "#94a3b8" },

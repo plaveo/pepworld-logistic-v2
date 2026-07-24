@@ -18,9 +18,10 @@ interface LogisticsWorkbenchProps {
 }
 
 const SIGNAL_STYLE: Record<string, React.CSSProperties> = {
-  GO:      { background: "#14532d", color: "#86efac", border: "1px solid #16a34a" },
-  CAUTION: { background: "#713f12", color: "#fde68a", border: "1px solid #ca8a04" },
-  AVOID:   { background: "#7f1d1d", color: "#fca5a5", border: "1px solid #dc2626" },
+  GO:           { background: "#14532d", color: "#86efac", border: "1px solid #16a34a" },
+  CAUTION:      { background: "#713f12", color: "#fde68a", border: "1px solid #ca8a04" },
+  AVOID:        { background: "#7f1d1d", color: "#fca5a5", border: "1px solid #dc2626" },
+  NOT_COMPUTED: { background: "#1e293b", color: "#94a3b8", border: "1px solid #334155" },
 };
 
 export function LogisticsWorkbench({ initialResponse }: LogisticsWorkbenchProps) {
@@ -28,6 +29,25 @@ export function LogisticsWorkbench({ initialResponse }: LogisticsWorkbenchProps)
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: "1rem 1rem 4rem" }}>
+      {/* Demo mode banner — Build Rule 8 */}
+      {r.isDemoPayload && (
+        <div
+          role="alert"
+          style={{
+            background: "#4c1d95",
+            color: "#ddd6fe",
+            border: "1px solid #7c3aed",
+            borderRadius: "8px",
+            padding: "0.75rem 1rem",
+            marginBottom: "1rem",
+            fontSize: "0.8rem",
+            fontWeight: 700,
+          }}
+        >
+          ⚠ DEMONSTRATION MODE — No Zebra, CIS, engine, route, capacity, availability,
+          or operational data is connected.
+        </div>
+      )}
       {/* Workbench header */}
       <header style={{ marginBottom: "1.5rem" }}>
         <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#f1f5f9", marginBottom: "0.25rem" }}>

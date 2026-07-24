@@ -4,9 +4,19 @@ A next-generation logistics intelligence workbench built on Next.js 14 with Type
 
 ## Architecture
 
-- **120 Engine Cards** — individual computation units, each a separate component class
-- **50 UI Modules** — display components, each a separate component class
-- **12 Map Cards** — result-explanation components (read-only; no GO/CAUTION/AVOID decisions)
+- **120 Engine Cards** — scaffold entries ENG001–ENG120, each a separate registry class (official titles PENDING)
+- **50 UI Modules** — display components, each a separate registry class
+- **12 Map Cards** — result-explanation components MC01–MC12 (CORE and CONDITIONAL; no GO/CAUTION/AVOID decisions)
+
+## Scaffold State
+
+No scaffold component is connected to live operational data. All engines use:
+
+- `connectionStatus: "NOT_CONNECTED"`
+- `calculationStatus: "NOT_YET_COMPUTED"`
+- `releaseState: "draft"`
+
+All demonstration responses use `decisionSignal: "NOT_COMPUTED"`.
 
 ## Build Rules
 
@@ -32,12 +42,12 @@ app/                          # Next.js App Router
 
 components/                   # UI components
 ├── ecosystem-map.tsx         # Logistics ecosystem map
-├── intelligence-card.tsx     # Single intelligence card display
+├── intelligence-card.tsx     # Single map card display
 ├── logistics-workbench.tsx   # Main workbench shell
 └── status-pill.tsx           # Status indicator pill
 
 lib/                          # Core logic
-├── demo-data.ts              # DEMO: Mock payloads (labeled)
+├── demo-data.ts              # DEMO: Demonstration payloads (NOT_COMPUTED, labeled)
 ├── registries.ts             # Engine card, UI module, map card registries
 └── types.ts                  # Shared TypeScript types
 
@@ -49,10 +59,21 @@ docs/                         # Architecture documentation
 ## Data Integrity
 
 All payloads preserve the following fields through every layer:
+
 - `status` — current record status
 - `missingInput` — list of absent input signals
-- `confidence` — data confidence level
+- `confidence` — data confidence level (`unverified` in scaffold)
 - `freshness` — ISO timestamp of last data update
-- `releaseState` — draft / review / approved / live / deprecated
+- `releaseState` — `draft` / `review` / `approved` / `deprecated` (no `live` in scaffold)
+- `connectionStatus` — `NOT_CONNECTED` until an approved data-connection task is implemented
+- `calculationStatus` — `NOT_YET_COMPUTED` until a released engine is connected
 
-Demo and mock payloads are always marked with `isDemoPayload: true` and a visible `[DEMO]` label in the UI.
+Demonstration payloads are always marked with `isDemoPayload: true` and a visible **DEMONSTRATION MODE** banner in the UI.
+
+## Validation
+
+```bash
+npm run validate:architecture   # Verify all 12 architecture constraints
+npm run lint                    # ESLint
+npm run build                   # TypeScript + Next.js production build
+```

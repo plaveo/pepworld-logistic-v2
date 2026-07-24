@@ -3,14 +3,29 @@
 // Build Rule 6: status, missingInput, confidence, freshness and releaseState
 // must be preserved through every layer.
 
-export type DecisionSignal = "GO" | "CAUTION" | "AVOID";
+export type DecisionSignal = "GO" | "CAUTION" | "AVOID" | "NOT_COMPUTED";
 
+// "live" is excluded from the scaffold release states.
+// No scaffold component may be marked live until official data connections are approved.
 export type ReleaseState =
   | "draft"
   | "review"
   | "approved"
-  | "live"
   | "deprecated";
+
+export type ConnectionStatus =
+  | "NOT_CONNECTED"
+  | "STAGING_CONNECTED"
+  | "CIS_VALIDATED"
+  | "RELEASED_SIGNAL_CONNECTED"
+  | "ACCESS_RESTRICTED";
+
+export type CalculationStatus =
+  | "NOT_YET_COMPUTED"
+  | "COMPUTED"
+  | "PARTIAL"
+  | "FAILED"
+  | "INCOMPLETE_INPUT";
 
 export type ConfidenceLevel = "high" | "medium" | "low" | "unverified";
 
@@ -72,12 +87,13 @@ export interface MapCardOutput {
 }
 
 // Full intelligence response returned by the API.
-// Decisions (GO/CAUTION/AVOID) are determined here, not inside map cards.
+// Decisions (GO/CAUTION/AVOID/NOT_COMPUTED) are determined here, not inside map cards.
 export interface IntelligenceResponse {
   requestId: string;
   timestamp: string;
   decisionSignal: DecisionSignal;
   decisionReason: string;
+  answerStatus: CalculationStatus;
   mapCardOutputs: MapCardOutput[];
   // Aggregate integrity fields (Build Rule 6)
   status: RecordStatus;
@@ -85,6 +101,8 @@ export interface IntelligenceResponse {
   confidence: ConfidenceLevel;
   freshness: string;
   releaseState: ReleaseState;
+  connectionStatus: ConnectionStatus;
+  calculationStatus: CalculationStatus;
   isDemoPayload: boolean;
 }
 
@@ -95,11 +113,34 @@ export interface IntelligenceRequest {
   context?: Record<string, unknown>;
 }
 
-// Descriptor used in registries.
+// Descriptor used in UI module registry.
 export interface CardDescriptor {
   id: string;
   name: string;
   version: string;
   description: string;
+  releaseState: ReleaseState;
+}
+
+// Scaffold entry for each of the 120 engine cards.
+// Official titles, formulas and data connections are NOT recorded here
+// until the official engine titles are supplied.
+export interface EngineRegistryEntry {
+  id: string;
+  displayName: string;
+  titleStatus: "PENDING_OFFICIAL_TITLE";
+  connectionStatus: ConnectionStatus;
+  calculationStatus: CalculationStatus;
+  releaseState: ReleaseState;
+}
+
+// Descriptor for each of the 12 approved map cards.
+// decisionAuthority is always false — map cards explain results only (Build Rule 4).
+export interface MapCardRegistryEntry {
+  id: string;
+  displayName: string;
+  category: "CORE" | "CONDITIONAL";
+  decisionAuthority: false;
+  connectionStatus: ConnectionStatus;
   releaseState: ReleaseState;
 }
