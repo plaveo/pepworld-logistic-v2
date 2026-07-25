@@ -10,7 +10,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Map as LeafletMapType, Polyline, Polygon, LineCapShape } from "leaflet";
+import type { Map as LeafletMapType, Polyline, Polygon, LineCapShape, LeafletMouseEvent } from "leaflet";
 
 import type { MapCardOutput } from "@/lib/types";
 import type {
@@ -226,10 +226,6 @@ export function LeafletMap({
         ecosystemRelationshipPayload?.relationships ?? []
       );
 
-      const nodeIdsConnectedToSelected = selectedNodeId
-        ? getConnectedNodeIds(ecosystemRelationshipPayload?.relationships ?? [], selectedNodeId)
-        : [];
-
       for (const rel of relationships) {
         const layerEnabled = relationshipLayerState?.[rel.relationshipType] !== false;
         if (!layerEnabled) continue;
@@ -271,9 +267,9 @@ export function LeafletMap({
         );
 
         if (onRelationshipSelect) {
-          polyline.on("click", (e) => {
-            // Prevent the map click from also firing.
-            (e as unknown as { originalEvent: Event }).originalEvent.stopPropagation?.();
+          polyline.on("click", (e: LeafletMouseEvent) => {
+            // Prevent the map click handler from also firing.
+            e.originalEvent.stopPropagation();
             onRelationshipSelect(rel.id);
             polyline.openPopup();
           });
@@ -328,8 +324,8 @@ export function LeafletMap({
         );
 
         if (onTerritorySelect) {
-          polygon.on("click", (e) => {
-            (e as unknown as { originalEvent: Event }).originalEvent.stopPropagation?.();
+          polygon.on("click", (e: LeafletMouseEvent) => {
+            e.originalEvent.stopPropagation();
             onTerritorySelect(territory.id);
             polygon.openPopup();
           });
@@ -352,14 +348,10 @@ export function LeafletMap({
 
       setHasVerifiedCoords(coordsFound);
 
-      // ── Dismiss active selection when clicking the map background ────────
+      // Dismiss active selection when clicking the map background.
       if (onClearSelection) {
         map.on("click", onClearSelection);
       }
-
-      // Void unused variables to satisfy the linter while keeping the
-      // variables in scope for future expansion.
-      void nodeIdsConnectedToSelected;
     }
 
     initMap();

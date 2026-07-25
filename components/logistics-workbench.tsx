@@ -238,14 +238,14 @@ export function LogisticsWorkbench({
   const toggleRelationshipType = useCallback((type: RelationshipType) => {
     setRelationshipLayerState((previous) => ({
       ...previous,
-      [type]: !(previous[type] !== false),
+      [type]: previous[type] === false,
     }));
   }, []);
 
   const toggleTerritoryType = useCallback((type: TerritoryType) => {
     setTerritoryLayerState((previous) => ({
       ...previous,
-      [type]: !(previous[type] !== false),
+      [type]: previous[type] === false,
     }));
   }, []);
 
